@@ -9,6 +9,12 @@
 *.ESD
 *.vhd
 *.vhdx
+*.exe
+*.msi
+*.deb
+
+# Local backups
+Backup/
 
 # Partial downloads
 *.part
@@ -19,6 +25,7 @@
 
 # Logs
 *.log
+logs/
 
 # OS junk
 .DS_Store
@@ -30,10 +37,24 @@ Desktop.ini
 .vscode/
 .idea/
 
-# Secrets
+# Secrets / environment files
 .env
 .env.*
+!.env.example
+
 *.pem
 *.key
 id_rsa
 id_ed25519
+
+# GLPI private credentials
+tools/GLPI/GLPI.env
+
+# PowerShell / Windows temporary files
+*.bak
+*.old
+
+# Local cache / temporary directories
+.cache/
+tmp/
+temp/
