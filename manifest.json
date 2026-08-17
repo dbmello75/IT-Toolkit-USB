@@ -1,0 +1,355 @@
+{
+  "project": {
+    "name": "IT Toolkit USB",
+    "description": "Automated Ventoy-based USB toolkit for IT technicians",
+    "schema_version": 1,
+    "version": "0.1.0"
+  },
+
+  "profiles": {
+    "standard": {
+      "name": "Standard Technician",
+      "description": "Essential operating system, recovery, cloning and maintenance tools"
+    },
+    "full": {
+      "name": "Full Technician",
+      "description": "Complete toolkit including operating systems, recovery, antivirus and virtualization"
+    },
+    "recovery": {
+      "name": "Recovery Toolkit",
+      "description": "Focused on disk, partition, file and operating system recovery"
+    },
+    "custom": {
+      "name": "Custom Installation",
+      "description": "Allow the technician to manually select components"
+    }
+  },
+
+  "directories": [
+    "ISO/Windows",
+    "ISO/Recovery",
+    "ISO/Antivirus",
+    "ISO/Linux",
+    "ISO/Virtualization",
+    "ISO/Network",
+    "tools",
+    "ventoy"
+  ],
+
+  "components": [
+    {
+      "id": "windows11-en",
+      "name": "Windows 11 x64 - English",
+      "description": "Microsoft Windows 11 installation media in English",
+      "category": "Windows",
+      "type": "iso",
+      "destination": "ISO/Windows",
+      "filename": "Windows11-English-x64.iso",
+
+      "profiles": [
+        "standard",
+        "full"
+      ],
+
+      "download": {
+        "enabled": true,
+        "method": "dynamic",
+        "provider": "microsoft",
+        "url": null
+      },
+
+      "checksum": {
+        "algorithm": "sha256",
+        "required": false,
+        "value": null
+      },
+
+      "enabled": true
+    },
+
+    {
+      "id": "windows11-ptbr",
+      "name": "Windows 11 x64 - Portuguese Brazil",
+      "description": "Microsoft Windows 11 installation media in Brazilian Portuguese",
+      "category": "Windows",
+      "type": "iso",
+      "destination": "ISO/Windows",
+      "filename": "Windows11-PTBR-x64.iso",
+
+      "profiles": [
+        "full"
+      ],
+
+      "download": {
+        "enabled": true,
+        "method": "dynamic",
+        "provider": "microsoft",
+        "url": null
+      },
+
+      "checksum": {
+        "algorithm": "sha256",
+        "required": false,
+        "value": null
+      },
+
+      "enabled": true
+    },
+
+    {
+      "id": "hirens",
+      "name": "Hiren's BootCD PE",
+      "description": "Windows PE based maintenance, diagnostics and recovery environment",
+      "category": "Recovery",
+      "type": "iso",
+      "destination": "ISO/Recovery",
+      "filename": "HBCD_PE_x64.iso",
+
+      "profiles": [
+        "standard",
+        "full",
+        "recovery"
+      ],
+
+      "download": {
+        "enabled": true,
+        "method": "dynamic",
+        "provider": "hirensbootcd",
+        "url": null
+      },
+
+      "checksum": {
+        "algorithm": "sha256",
+        "required": true,
+        "value": null
+      },
+
+      "enabled": true
+    },
+
+    {
+      "id": "systemrescue",
+      "name": "SystemRescue",
+      "description": "Linux-based system administration and data recovery environment",
+      "category": "Recovery",
+      "type": "iso",
+      "destination": "ISO/Recovery",
+      "filename": "systemrescue.iso",
+
+      "profiles": [
+        "standard",
+        "full",
+        "recovery"
+      ],
+
+      "download": {
+        "enabled": true,
+        "method": "dynamic",
+        "provider": "systemrescue",
+        "url": null
+      },
+
+      "checksum": {
+        "algorithm": "sha256",
+        "required": true,
+        "value": null
+      },
+
+      "enabled": true
+    },
+
+    {
+      "id": "rescuezilla",
+      "name": "Rescuezilla",
+      "description": "Graphical disk imaging, backup and recovery environment",
+      "category": "Recovery",
+      "type": "iso",
+      "destination": "ISO/Recovery",
+      "filename": "rescuezilla.iso",
+
+      "profiles": [
+        "standard",
+        "full",
+        "recovery"
+      ],
+
+      "download": {
+        "enabled": true,
+        "method": "dynamic",
+        "provider": "rescuezilla",
+        "url": null
+      },
+
+      "checksum": {
+        "algorithm": "sha256",
+        "required": true,
+        "value": null
+      },
+
+      "enabled": true
+    },
+
+    {
+      "id": "clonezilla",
+      "name": "Clonezilla Live",
+      "description": "Disk cloning and imaging utility",
+      "category": "Recovery",
+      "type": "iso",
+      "destination": "ISO/Recovery",
+      "filename": "clonezilla-live.iso",
+
+      "profiles": [
+        "standard",
+        "full",
+        "recovery"
+      ],
+
+      "download": {
+        "enabled": true,
+        "method": "dynamic",
+        "provider": "clonezilla",
+        "url": null
+      },
+
+      "checksum": {
+        "algorithm": "sha256",
+        "required": true,
+        "value": null
+      },
+
+      "enabled": true
+    },
+
+    {
+      "id": "kaspersky-rescue",
+      "name": "Kaspersky Rescue Disk",
+      "description": "Bootable malware scanning and recovery environment",
+      "category": "Antivirus",
+      "type": "iso",
+      "destination": "ISO/Antivirus",
+      "filename": "kaspersky-rescue.iso",
+
+      "profiles": [
+        "full",
+        "recovery"
+      ],
+
+      "download": {
+        "enabled": true,
+        "method": "dynamic",
+        "provider": "kaspersky",
+        "url": null
+      },
+
+      "checksum": {
+        "algorithm": "sha256",
+        "required": false,
+        "value": null
+      },
+
+      "enabled": true
+    },
+
+    {
+      "id": "zorin",
+      "name": "Zorin OS Core",
+      "description": "Desktop Linux distribution useful for testing, troubleshooting and general-purpose live environments",
+      "category": "Linux",
+      "type": "iso",
+      "destination": "ISO/Linux",
+      "filename": "zorin-os-core.iso",
+
+      "profiles": [
+        "full"
+      ],
+
+      "download": {
+        "enabled": true,
+        "method": "dynamic",
+        "provider": "zorin",
+        "url": null
+      },
+
+      "checksum": {
+        "algorithm": "sha256",
+        "required": true,
+        "value": null
+      },
+
+      "enabled": true
+    },
+
+    {
+      "id": "proxmox-ve",
+      "name": "Proxmox VE",
+      "description": "Proxmox Virtual Environment installer",
+      "category": "Virtualization",
+      "type": "iso",
+      "destination": "ISO/Virtualization",
+      "filename": "proxmox-ve.iso",
+
+      "profiles": [
+        "full"
+      ],
+
+      "download": {
+        "enabled": true,
+        "method": "dynamic",
+        "provider": "proxmox",
+        "url": null
+      },
+
+      "checksum": {
+        "algorithm": "sha256",
+        "required": true,
+        "value": null
+      },
+
+      "enabled": true
+    },
+
+    {
+      "id": "netbootxyz",
+      "name": "netboot.xyz",
+      "description": "Network boot environment providing access to operating systems, installers and rescue utilities",
+      "category": "Network",
+      "type": "iso",
+      "destination": "ISO/Network",
+      "filename": "netboot.xyz.iso",
+
+      "profiles": [
+        "standard",
+        "full"
+      ],
+
+      "download": {
+        "enabled": true,
+        "method": "direct",
+        "provider": "netbootxyz",
+        "url": "https://boot.netboot.xyz/ipxe/netboot.xyz.iso"
+      },
+
+      "checksum": {
+        "algorithm": "sha256",
+        "required": false,
+        "value": null
+      },
+
+      "enabled": true
+    }
+  ],
+
+  "ventoy": {
+    "config_source": "ventoy/ventoy.json",
+    "config_destination": "ventoy/ventoy.json",
+    "install_latest": true
+  },
+
+  "installer": {
+    "require_admin": true,
+    "require_usb_confirmation": true,
+    "allow_fixed_disks": false,
+    "verify_downloads": true,
+    "continue_on_optional_download_failure": true
+  }
+}
