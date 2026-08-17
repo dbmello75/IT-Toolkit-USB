@@ -1,0 +1,36 @@
+{
+  "auto_install": [
+    {
+      "image": "/ISO/Windows/Win11_UN-ES.iso",
+      "template": [
+        "/ventoy/autoinstall/windows/en-us/wipe-all.xml",
+        "/ventoy/autoinstall/windows/en-us/safe-partition.xml",
+        "/ventoy/autoinstall/windows/en-us/bios-key.xml"
+      ],
+      "timeout": 0
+    },
+    {
+      "image": "/ISO/Windows/Win11_PT-BR.iso",
+      "template": [
+        "/ventoy/autoinstall/windows/pt-br/wipe-all.xml",
+        "/ventoy/autoinstall/windows/pt-br/safe-partition.xml",
+        "/ventoy/autoinstall/windows/pt-br/bios-key.xml"
+      ],
+      "timeout": 0
+    },
+    {
+      "image": "/ISO/Linux/debian-13.iso",
+      "template": [
+        "/ventoy/autoinstall/debian/preseed.cfg"
+      ],
+      "timeout": 0
+    },
+    {
+      "image": "/ISO/Linux/Zorin-OS-18.iso",
+      "template": [
+        "/ventoy/autoinstall/zorin/autoinstall.yaml"
+      ],
+      "timeout": 0
+    }
+  ]
+}
