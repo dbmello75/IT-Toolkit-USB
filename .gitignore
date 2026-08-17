@@ -1,0 +1,39 @@
+# Boot / installation images
+*.iso
+*.ISO
+*.img
+*.IMG
+*.wim
+*.WIM
+*.esd
+*.ESD
+*.vhd
+*.vhdx
+
+# Partial downloads
+*.part
+*.partial
+*.download
+*.crdownload
+*.tmp
+
+# Logs
+*.log
+
+# OS junk
+.DS_Store
+Thumbs.db
+Desktop.ini
+.Trash-*
+
+# Editors
+.vscode/
+.idea/
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+id_rsa
+id_ed25519
