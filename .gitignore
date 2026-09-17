@@ -41,6 +41,7 @@ Desktop.ini
 .env
 .env.*
 !.env.example
+xibo.env
 
 *.pem
 *.key
