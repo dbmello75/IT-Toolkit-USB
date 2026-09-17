@@ -3,9 +3,8 @@
     "name": "IT Toolkit USB",
     "description": "Automated Ventoy-based USB toolkit for IT technicians",
     "schema_version": 1,
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
-
   "profiles": {
     "standard": {
       "name": "Standard Technician",
@@ -19,12 +18,15 @@
       "name": "Recovery Toolkit",
       "description": "Focused on disk, partition, file and operating system recovery"
     },
+    "xibo": {
+      "name": "Xibo Deployment",
+      "description": "Automated Debian 13 deployment for Hitech Network Xibo Player computers"
+    },
     "custom": {
       "name": "Custom Installation",
       "description": "Allow the technician to manually select components"
     }
   },
-
   "directories": [
     "ISO/Windows",
     "ISO/Recovery",
@@ -33,9 +35,9 @@
     "ISO/Virtualization",
     "ISO/Network",
     "tools",
-    "ventoy"
+    "ventoy",
+    "auto"
   ],
-
   "components": [
     {
       "id": "windows11-en",
@@ -45,28 +47,20 @@
       "type": "iso",
       "destination": "ISO/Windows",
       "filename": "Windows11-English-x64.iso",
-
-      "profiles": [
-        "standard",
-        "full"
-      ],
-
+      "profiles": ["standard", "full"],
       "download": {
         "enabled": true,
         "method": "dynamic",
         "provider": "microsoft",
         "url": null
       },
-
       "checksum": {
         "algorithm": "sha256",
         "required": false,
         "value": null
       },
-
       "enabled": true
     },
-
     {
       "id": "windows11-ptbr",
       "name": "Windows 11 x64 - Portuguese Brazil",
@@ -75,27 +69,42 @@
       "type": "iso",
       "destination": "ISO/Windows",
       "filename": "Windows11-PTBR-x64.iso",
-
-      "profiles": [
-        "full"
-      ],
-
+      "profiles": ["full"],
       "download": {
         "enabled": true,
         "method": "dynamic",
         "provider": "microsoft",
         "url": null
       },
-
       "checksum": {
         "algorithm": "sha256",
         "required": false,
         "value": null
       },
-
       "enabled": true
     },
-
+    {
+      "id": "xibo-player-installer",
+      "name": "Xibo Player Automated Installer",
+      "description": "Official Debian 13 netinst with Ventoy preseed and GRUB automation for Xibo Player deployment",
+      "category": "Deployment",
+      "type": "iso",
+      "destination": "ISO/Linux",
+      "filename": "debian-13-netinst_VTNORMAL.iso",
+      "profiles": ["xibo"],
+      "download": {
+        "enabled": true,
+        "method": "dynamic",
+        "provider": "debian",
+        "url": null
+      },
+      "checksum": {
+        "algorithm": "sha256",
+        "required": true,
+        "value": null
+      },
+      "enabled": true
+    },
     {
       "id": "hirens",
       "name": "Hiren's BootCD PE",
@@ -104,29 +113,20 @@
       "type": "iso",
       "destination": "ISO/Recovery",
       "filename": "HBCD_PE_x64.iso",
-
-      "profiles": [
-        "standard",
-        "full",
-        "recovery"
-      ],
-
+      "profiles": ["standard", "full", "recovery"],
       "download": {
         "enabled": true,
         "method": "dynamic",
         "provider": "hirensbootcd",
         "url": null
       },
-
       "checksum": {
         "algorithm": "sha256",
         "required": true,
         "value": null
       },
-
       "enabled": true
     },
-
     {
       "id": "systemrescue",
       "name": "SystemRescue",
@@ -135,29 +135,20 @@
       "type": "iso",
       "destination": "ISO/Recovery",
       "filename": "systemrescue.iso",
-
-      "profiles": [
-        "standard",
-        "full",
-        "recovery"
-      ],
-
+      "profiles": ["standard", "full", "recovery"],
       "download": {
         "enabled": true,
         "method": "dynamic",
         "provider": "systemrescue",
         "url": null
       },
-
       "checksum": {
         "algorithm": "sha256",
         "required": true,
         "value": null
       },
-
       "enabled": true
     },
-
     {
       "id": "rescuezilla",
       "name": "Rescuezilla",
@@ -166,29 +157,20 @@
       "type": "iso",
       "destination": "ISO/Recovery",
       "filename": "rescuezilla.iso",
-
-      "profiles": [
-        "standard",
-        "full",
-        "recovery"
-      ],
-
+      "profiles": ["standard", "full", "recovery"],
       "download": {
         "enabled": true,
         "method": "dynamic",
         "provider": "rescuezilla",
         "url": null
       },
-
       "checksum": {
         "algorithm": "sha256",
         "required": true,
         "value": null
       },
-
       "enabled": true
     },
-
     {
       "id": "clonezilla",
       "name": "Clonezilla Live",
@@ -197,29 +179,20 @@
       "type": "iso",
       "destination": "ISO/Recovery",
       "filename": "clonezilla-live.iso",
-
-      "profiles": [
-        "standard",
-        "full",
-        "recovery"
-      ],
-
+      "profiles": ["standard", "full", "recovery"],
       "download": {
         "enabled": true,
         "method": "dynamic",
         "provider": "clonezilla",
         "url": null
       },
-
       "checksum": {
         "algorithm": "sha256",
         "required": true,
         "value": null
       },
-
       "enabled": true
     },
-
     {
       "id": "kaspersky-rescue",
       "name": "Kaspersky Rescue Disk",
@@ -228,28 +201,20 @@
       "type": "iso",
       "destination": "ISO/Antivirus",
       "filename": "kaspersky-rescue.iso",
-
-      "profiles": [
-        "full",
-        "recovery"
-      ],
-
+      "profiles": ["full", "recovery"],
       "download": {
         "enabled": true,
         "method": "dynamic",
         "provider": "kaspersky",
         "url": null
       },
-
       "checksum": {
         "algorithm": "sha256",
         "required": false,
         "value": null
       },
-
       "enabled": true
     },
-
     {
       "id": "zorin",
       "name": "Zorin OS Core",
@@ -258,27 +223,20 @@
       "type": "iso",
       "destination": "ISO/Linux",
       "filename": "zorin-os-core.iso",
-
-      "profiles": [
-        "full"
-      ],
-
+      "profiles": ["full"],
       "download": {
         "enabled": true,
         "method": "dynamic",
         "provider": "zorin",
         "url": null
       },
-
       "checksum": {
         "algorithm": "sha256",
         "required": true,
         "value": null
       },
-
       "enabled": true
     },
-
     {
       "id": "proxmox-ve",
       "name": "Proxmox VE",
@@ -287,27 +245,20 @@
       "type": "iso",
       "destination": "ISO/Virtualization",
       "filename": "proxmox-ve.iso",
-
-      "profiles": [
-        "full"
-      ],
-
+      "profiles": ["full"],
       "download": {
         "enabled": true,
         "method": "dynamic",
         "provider": "proxmox",
         "url": null
       },
-
       "checksum": {
         "algorithm": "sha256",
         "required": true,
         "value": null
       },
-
       "enabled": true
     },
-
     {
       "id": "netbootxyz",
       "name": "netboot.xyz",
@@ -316,35 +267,26 @@
       "type": "iso",
       "destination": "ISO/Network",
       "filename": "netboot.xyz.iso",
-
-      "profiles": [
-        "standard",
-        "full"
-      ],
-
+      "profiles": ["standard", "full"],
       "download": {
         "enabled": true,
         "method": "direct",
         "provider": "netbootxyz",
         "url": "https://boot.netboot.xyz/ipxe/netboot.xyz.iso"
       },
-
       "checksum": {
         "algorithm": "sha256",
         "required": false,
         "value": null
       },
-
       "enabled": true
     }
   ],
-
   "ventoy": {
     "config_source": "ventoy/ventoy.json",
     "config_destination": "ventoy/ventoy.json",
     "install_latest": true
   },
-
   "installer": {
     "require_admin": true,
     "require_usb_confirmation": true,
