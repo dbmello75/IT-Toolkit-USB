@@ -1,418 +1,228 @@
 # IT Toolkit USB
 
-A reproducible, technician-focused **Ventoy USB toolkit** designed for IT support, system administration, diagnostics, recovery, deployment, and field service.
+Ventoy-based USB toolkit for IT support, recovery, operating-system deployment, diagnostics, and Hitech Network Xibo Player installation.
 
-The goal is simple:
+The repository is the source of truth. The USB is a generated result that should be disposable and reproducible.
 
-> Plug in a USB drive, run the installer, and build a complete technician toolkit with minimal manual work.
-
-This project is intended for IT technicians who want a standardized USB drive that can be recreated anywhere without manually hunting down tools, ISOs, configuration files, and recovery utilities every time.
-
----
-
-## Features
-
-- Automated Ventoy-based USB creation
-- Standardized folder structure
-- Technician-focused ISO selection
-- Windows installation and recovery media
-- Linux rescue and diagnostic environments
-- Disk imaging and cloning tools
-- Partition and file recovery utilities
-- Antivirus rescue environments
-- Hypervisor installation media
-- Custom Ventoy configuration
-- Easy-to-reproduce technician USB drives
-- Public GitHub repository without storing large ISO files
-- Manifest-driven design for future automation
-
----
-
-## Project Goals
-
-This project is not meant to be just another collection of ISO links.
-
-The main objective is to make the **creation and delivery of an IT technician USB drive as simple and reproducible as possible**.
-
-A technician should eventually be able to:
-
-1. Clone or download this repository.
-2. Connect a USB drive.
-3. Run the installer.
-4. Select the desired profile or tools.
-5. Let the script install Ventoy and prepare the USB.
-6. Start using the technician toolkit.
-
-No manual folder creation.  
-No searching through multiple websites.  
-No rebuilding the USB from memory.
-
----
-
-## Planned USB Toolkit
-
-The default toolkit is intended to include utilities such as:
-
-### Windows
-
-- Windows 11 x64 — English
-- Windows 11 x64 — Portuguese (Brazil)
-
-### Recovery & Maintenance
-
-- Hiren's BootCD PE
-- SystemRescue
-- Rescuezilla
-- Clonezilla Live
-- Netboot.xyz
-
-### Antivirus / Malware Recovery
-
-- Kaspersky Rescue Disk
-
-### Linux
-
-- Zorin OS Core
-
-### Virtualization
-
-- Proxmox VE
-
-Additional tools may be added over time.
-
----
-
-## Repository Structure
+## Current structure
 
 ```text
 IT-Toolkit-USB/
-├── README.md
-├── manifest.json
-├── .gitignore
+├── auto/
+│   ├── en-us_bios-key.xml
+│   ├── en-us_safe-part.xml
+│   ├── pt-br_bios-key.xml
+│   ├── pt-br_safe-part.xml
+│   ├── xibo-auto.cfg
+│   ├── xibo-grub.cfg
+│   └── zorin-autoinstall.yaml
 │
-├── Backup/
+├── ISO/
+│   ├── Antivirus/
+│   ├── Linux/
+│   ├── Recovery/
+│   ├── Virtualization/
+│   └── Windows/
 │
-├── install/
-│   ├── Install-USB.bat
-│   └── Install-USB.ps1
-│
-├── ventoy/
-│   ├── ventoy.json
-│   └── theme/
-│
-├── scripts/
-│   ├── windows/
-│   └── linux/
+├── rootfs/
+│   ├── home/xibocli/
+│   └── usr/local/bin/
 │
 ├── tools/
+├── ventoy/
+│   ├── theme/
+│   └── ventoy.json
 │
-└── ISO/
-    ├── Windows/
-    ├── Recovery/
-    ├── Antivirus/
-    ├── Linux/
-    └── Virtualization/
+├── deploy.sh
+├── manifest.json
+├── xibo.env.example
+└── README.md
 ```
 
----
+All unattended-install files are intentionally kept directly under `auto/`. There is no `ventoy/autoinstall/` hierarchy.
 
-## Why ISOs Are Not Stored in GitHub
+## Ventoy automation
 
-ISO files are intentionally excluded from the repository.
+`ventoy/ventoy.json` currently defines unattended-install templates for:
 
-Most installation and recovery images are several gigabytes in size, making GitHub an inappropriate place to distribute or version them.
+- Windows 11 English;
+- Windows 11 Portuguese (Brazil);
+- Hitech Xibo Player deployment using Debian 13 netinst;
+- Zorin OS.
 
-The repository contains:
-
-- Scripts
-- Configuration files
-- Ventoy settings
-- Themes
-- Manifest information
-- Installation logic
-- Documentation
-
-The actual ISO files are downloaded separately during the USB preparation process.
-
-The `.gitignore` file prevents disk images from being accidentally committed.
-
----
-
-## Backup Directory
-
-The local:
+The Xibo deployment uses:
 
 ```text
-Backup/
+ISO/Linux/debian-13-netinst_VTNORMAL.iso
+        -> auto/xibo-auto.cfg
+        -> auto/xibo-grub.cfg
 ```
 
-directory is also ignored by Git.
+Ventoy `auto_install` injects the Xibo preseed, while `conf_replace` replaces Debian's installer GRUB configuration in memory so the installer starts through the Xibo entry.
 
-It can be used for local backups, temporary synchronization, previous configurations, or files that should never be committed to the public repository.
+## Xibo deployment
 
----
+The former `XiboP-Hitech` deployment is now integrated into this repository.
 
-## Manifest
-
-`manifest.json` acts as the central catalog for the toolkit.
-
-It is intended to describe:
-
-- Tool name
-- Category
-- Destination directory
-- Download source
-- Filename
-- Version
-- Checksum
-- Installation profile
-- Whether the tool is enabled by default
-
-The long-term goal is to allow the installer to use the manifest without hardcoding every ISO directly into PowerShell or shell scripts.
-
-Example concept:
-
-```json
-{
-  "id": "clonezilla",
-  "name": "Clonezilla Live",
-  "category": "Recovery",
-  "destination": "ISO/Recovery",
-  "enabled": true
-}
-```
-
----
-
-## Installation
-
-The installation workflow is currently under development.
-
-The planned Windows workflow will be:
+The Xibo files are split into three parts:
 
 ```text
-Download / Clone Repository
-           ↓
-Connect USB Drive
-           ↓
-Run Install-USB.bat
-           ↓
-Select USB Device
-           ↓
-Confirm Data Erasure
-           ↓
-Install Ventoy
-           ↓
-Download / Copy Selected Tools
-           ↓
-Apply Ventoy Configuration
-           ↓
-Technician USB Ready
+auto/xibo-auto.cfg          Debian preseed
+auto/xibo-grub.cfg          Debian installer GRUB entry
+rootfs/                     Files installed into the Xibo client
 ```
 
-The goal is to make the process accessible even to technicians who are not comfortable with Git, PowerShell, or Linux.
+The target disk is intentionally **never hard-coded**. Disk selection remains manual because deployment machines may contain SATA, NVMe, multiple internal drives, or multiple USB devices.
 
----
+### Xibo rootfs
 
-## Planned Installation Profiles
-
-Future versions may provide different toolkit profiles.
-
-### Standard Technician
-
-Designed for everyday IT support.
-
-Possible contents:
-
-- Windows 11
-- Hiren's BootCD PE
-- SystemRescue
-- Clonezilla
-- Rescuezilla
-
-### Full Technician
-
-Everything in Standard plus:
-
-- Antivirus rescue tools
-- Zorin OS
-- Proxmox VE
-- Netboot.xyz
-- Additional diagnostic utilities
-
-### Recovery
-
-Focused on damaged disks, partitions, and operating systems.
-
-Possible contents:
-
-- Hiren's BootCD PE
-- SystemRescue
-- Rescuezilla
-- Clonezilla
-- File recovery tools
-
-### Custom
-
-Allows the technician to select exactly which tools should be installed.
-
----
-
-## Example Installer Experience
-
-The final installer may look similar to:
+The rootfs contains the provisioning files used by the installed Debian system, including:
 
 ```text
-=================================================
-             IT TOOLKIT USB BUILDER
-=================================================
-
-Select installation profile:
-
-1 - Standard Technician
-2 - Full Technician
-3 - Recovery Toolkit
-4 - Custom Installation
-5 - Exit
-
-Selection:
+rootfs/home/xibocli/.config/lxsession/LXDE/autostart
+rootfs/home/xibocli/snap/xibo-player/common/
+rootfs/usr/local/bin/orientation.sh
+rootfs/usr/local/bin/post-install.sh
+rootfs/usr/local/bin/start-desktop.sh
+rootfs/usr/local/bin/xibo-backup.sh
 ```
 
-The installer should then detect available removable drives and clearly display the device before any destructive operation.
+During post-installation the operator can set the hostname, configure Wi-Fi through NetworkManager, choose display orientation, register the RMM agent, install Xibo Player, and complete cleanup.
 
-Example:
+The final Xibo LXDE autostart is reduced to the Xibo Player itself. `start-desktop.sh` can be used when the LXDE panel and desktop are needed temporarily for maintenance.
+
+## Private Xibo values
+
+This is a public toolkit repository, so Xibo credentials and password hashes are **not committed**.
+
+The tracked templates contain placeholders. Create the local private file:
+
+```bash
+cp xibo.env.example xibo.env
+```
+
+Then fill in:
 
 ```text
-Detected USB devices:
-
-[1] SanDisk Ultra
-    Size: 128 GB
-    Device: E:
-
-[2] Kingston DataTraveler
-    Size: 64 GB
-    Device: F:
-
-Select target USB:
+XIBO_ROOT_PASSWORD_HASH
+XIBO_USER_PASSWORD_HASH
+XIBO_CMS_KEY
 ```
 
-Before formatting or installing Ventoy, the user must explicitly confirm the selected device.
+`xibo.env` is ignored by Git.
 
----
+If `XIBO_USER_PASSWORD_HASH` is left blank, `deploy.sh` reuses `XIBO_ROOT_PASSWORD_HASH` for `xibocli`, matching the previous deployment behavior.
+
+## Running deploy.sh
+
+The Xibo deployment workflow is run from Linux:
+
+```bash
+sudo ./deploy.sh
+```
+
+When executed through `sudo`, remote SSH/SCP operations are automatically run as the original user so aliases and keys from that user's `~/.ssh/config` continue to work.
+
+The script performs three operations.
+
+### 1. Build and publish the Xibo rootfs
+
+`rootfs/` is copied to a temporary staging directory, the private CMS key is injected there, and the package is created as:
+
+```text
+/tmp/output/xibo-client.tar.gz
+```
+
+It is uploaded atomically to the configured remote server. Defaults:
+
+```text
+REMOTE_SSH=remote
+REMOTE_PATH=/var/www/display
+```
+
+Published package:
+
+```text
+https://remote.vicpro.co/display/xibo-client.tar.gz
+```
+
+### 2. Maintain the Debian 13 netinst ISO
+
+The script reads Debian's official `SHA256SUMS`, determines the current Debian 13 AMD64 netinst filename, downloads it only when required, and verifies its SHA-256 checksum.
+
+Local cache:
+
+```text
+/opt/xibo-img
+```
+
+### 3. Update a mounted Ventoy USB
+
+The script copies:
+
+```text
+ventoy/*  -> USB /ventoy/
+auto/*    -> USB /auto/
+```
+
+Before writing `xibo-auto.cfg` to the USB, the private password hashes are injected into the preseed copy. The repository itself remains sanitized.
+
+The current Debian netinst is written as:
+
+```text
+/ISO/Linux/debian-13-netinst_VTNORMAL.iso
+```
+
+with its checksum stored alongside it.
+
+Automatic USB detection recognizes a mounted filesystem labeled `Ventoy` or `XiboPlayer`, or a mount containing both `ventoy/` and `ISO/`.
+
+An explicit mount can also be supplied:
+
+```bash
+sudo USB_MOUNT=/mnt/ventoy ./deploy.sh
+```
+
+## Toolkit manifest
+
+`manifest.json` is the central catalog for toolkit components and profiles.
+
+Current profiles include:
+
+- Standard Technician;
+- Full Technician;
+- Recovery Toolkit;
+- Xibo Deployment;
+- Custom Installation.
+
+The Xibo profile points to the Debian netinst image managed by `deploy.sh`.
+
+## ISO files
+
+Large disk images are intentionally excluded from GitHub. The repository stores configuration, automation, manifests, and scripts rather than ISO files themselves.
+
+Typical USB layout:
+
+```text
+ISO/
+├── Windows/
+├── Recovery/
+├── Antivirus/
+├── Linux/
+└── Virtualization/
+```
 
 ## Safety
 
-USB preparation is a destructive operation.
+USB preparation and operating-system installation can destroy data.
 
-Installing Ventoy may erase or repartition the selected USB device.
+Always:
 
-The installer should always:
+- verify the selected USB by model, capacity, and device name;
+- require explicit confirmation before destructive operations;
+- never automatically select an installation target disk;
+- keep private deployment credentials out of Git.
 
-- Clearly identify the selected device
-- Display its size and model
-- Require explicit confirmation
-- Avoid automatically selecting a disk
-- Refuse to continue when the target cannot be safely identified
+## Project status
 
-Never run disk preparation scripts without verifying the selected device.
-
----
-
-## Ventoy
-
-This project uses [Ventoy](https://www.ventoy.net/) as the boot platform.
-
-Ventoy allows multiple ISO, WIM, IMG, VHD(x), and EFI files to coexist on a single USB drive without extracting each operating system image.
-
-This project is independent and is not affiliated with or endorsed by the Ventoy project.
-
----
-
-## Intended Audience
-
-This toolkit is designed for:
-
-- IT technicians
-- Help desk staff
-- MSP technicians
-- Field service technicians
-- System administrators
-- Homelab users
-- Computer repair professionals
-- Infrastructure engineers
-
----
-
-## Contributions
-
-Contributions are welcome.
-
-Useful contributions may include:
-
-- New recovery tools
-- Better download automation
-- Improved PowerShell installation logic
-- Better USB detection
-- Ventoy configuration improvements
-- Themes
-- Documentation
-- Additional technician profiles
-- Checksum validation
-- Download source maintenance
-
-When adding new software, prefer official project download sources whenever possible.
-
----
-
-## Roadmap
-
-Planned improvements include:
-
-- [ ] Automated Ventoy installation
-- [ ] Safe USB device detection
-- [ ] Manifest-driven downloads
-- [ ] Download progress reporting
-- [ ] SHA-256 verification
-- [ ] Installation profiles
-- [ ] Custom ISO selection
-- [ ] Windows 11 language selection
-- [ ] Automated Ventoy configuration
-- [ ] Technician tools directory
-- [ ] Optional offline repository support
-- [ ] Update existing technician USB
-- [ ] Restore technician USB from backup
-- [ ] Improved error handling
-- [ ] Logging
-- [ ] Version reporting
-
----
-
-## Philosophy
-
-An IT technician USB should be disposable and reproducible.
-
-If a USB drive is lost, corrupted, damaged, or needs to be replaced, rebuilding it should not require remembering how the previous one was assembled.
-
-The configuration belongs in code.
-
-The USB is simply the generated result.
-
----
-
-## License
-
-A license has not yet been selected.
-
-Before publishing a stable release, this project should include an appropriate open-source license.
-
-Note that operating systems, recovery utilities, Ventoy, and other third-party software included or downloaded by this project remain subject to their respective licenses and redistribution terms.
-
----
-
-## Status
-
-**Early development**
-
-The repository structure, manifest format, installation workflow, and default technician toolkit are currently being designed.
-
-The project is usable as a foundation, but the fully automated installer is still under development.
+The Ventoy/Xibo integration is functional and the toolkit manifest provides the foundation for broader automated ISO downloads and installation profiles. Additional toolkit download automation can be developed independently without changing the Xibo deployment flow.
