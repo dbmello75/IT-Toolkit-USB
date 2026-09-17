@@ -17,11 +17,9 @@
       "timeout": 0
     },
     {
-      "image": "/ISO/Linux/debian-13.iso",
-      "template": [
-        "/auto/debian-preseed.cfg"
-      ],
-      "timeout": 0
+      "image": "/ISO/Linux/debian-13-netinst_VTNORMAL.iso",
+      "template": "/auto/xibo-auto.cfg",
+      "autosel": 1
     },
     {
       "image": "/ISO/Linux/Zorin-OS-18.iso",
@@ -29,6 +27,13 @@
         "/auto/zorin-autoinstall.yaml"
       ],
       "timeout": 0
+    }
+  ],
+  "conf_replace": [
+    {
+      "iso": "/ISO/Linux/debian-13-netinst_VTNORMAL.iso",
+      "org": "/boot/grub/grub.cfg",
+      "new": "/auto/xibo-grub.cfg"
     }
   ]
 }
