@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sizeX>0</sizeX>
+<sizeY>0</sizeY>
+<offsetX>0</offsetX>
+<offfsetY>0</offfsetY>
+<logLevel>error</logLevel>
+<displayName>DICO88</displayName>
+<preventSleep>true</preventSleep>
+<statsEnabled>false</statsEnabled>
+<collectInterval>294</collectInterval>
+<xmrNetworkAddress>tcp://tela.vicpro.co:9505</xmrNetworkAddress>
+<embeddedServerPort>9696</embeddedServerPort>
+<screenshotInterval>0</screenshotInterval>
