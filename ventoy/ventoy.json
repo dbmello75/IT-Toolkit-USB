@@ -1,7 +1,7 @@
 {
   "auto_install": [
     {
-      "image": "/ISO/Windows/Win11_UN-ES.iso",
+      "image": "/ISO/Windows/Windows11-EN-US_VTNORMAL.iso",
       "template": [
         "/auto/en-us_safe-part.xml",
         "/auto/en-us_bios-key.xml"
@@ -9,7 +9,7 @@
       "timeout": 0
     },
     {
-      "image": "/ISO/Windows/Win11_PT-BR.iso",
+      "image": "/ISO/Windows/Windows11-PT-BR_VTNORMAL.iso",
       "template": [
         "/auto/pt-br_safe-part.xml",
         "/auto/pt-br_bios-key.xml"
@@ -20,13 +20,6 @@
       "image": "/ISO/Linux/debian-13-netinst_VTNORMAL.iso",
       "template": "/auto/xibo-auto.cfg",
       "autosel": 1
-    },
-    {
-      "image": "/ISO/Linux/Zorin-OS-18.iso",
-      "template": [
-        "/auto/zorin-autoinstall.yaml"
-      ],
-      "timeout": 0
     }
   ],
   "conf_replace": [
