@@ -15,12 +15,18 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOTFS_DIR="$ROOT_DIR/rootfs"
 AUTO_DIR="$ROOT_DIR/auto"
 VENTOY_DIR="$ROOT_DIR/ventoy"
+CONFIG_DIR="$ROOT_DIR/config"
+TOOLS_DIR="$ROOT_DIR/tools"
 VENTOY_FILE="$VENTOY_DIR/ventoy.json"
 XIBO_AUTO_FILE="$AUTO_DIR/xibo-auto.cfg"
 XIBO_GRUB_FILE="$AUTO_DIR/xibo-grub.cfg"
-SECRETS_FILE=${XIBO_SECRETS_FILE:-$ROOT_DIR/xibo.env}
+SECRETS_FILE=${XIBO_SECRETS_FILE:-$CONFIG_DIR/xibo.env}
 OUTPUT_DIR="/tmp/output"
 PACKAGE_FILE="$OUTPUT_DIR/$PACKAGE_NAME"
+TOOLKIT_PACKAGE_NAME="it-toolkit-files.tar.gz"
+TOOLKIT_PACKAGE_FILE="$OUTPUT_DIR/$TOOLKIT_PACKAGE_NAME"
+TOOLKIT_SHA_FILE="$OUTPUT_DIR/it-toolkit-files.sha256"
+TOOLKIT_REMOTE_PATH="${TOOLKIT_REMOTE_PATH:-$REMOTE_PATH/toolkit}"
 
 require_cmd() {
     command -v "$1" >/dev/null 2>&1 || {
@@ -29,7 +35,7 @@ require_cmd() {
     }
 }
 
-for cmd in tar scp ssh wget lsblk cp sync sha256sum awk grep mktemp; do
+for cmd in tar scp ssh wget lsblk cp sync sha256sum awk grep mktemp find; do
     require_cmd "$cmd"
 done
 
@@ -45,7 +51,7 @@ fi
 
 if [[ ! -f "$SECRETS_FILE" ]]; then
     echo "[FAIL] Missing Xibo secrets file: $SECRETS_FILE" >&2
-    echo "       Copy xibo.env.example to xibo.env and fill in the private values." >&2
+    echo "       Copy config/xibo.env.example to config/xibo.env and fill in the private values." >&2
     exit 1
 fi
 
@@ -89,7 +95,7 @@ run_scp() {
 # -----------------------------------------------------------------------------
 # 1. Build and publish the Xibo client package
 # -----------------------------------------------------------------------------
-echo "[1/3] Building $PACKAGE_NAME..."
+echo "[1/4] Building $PACKAGE_NAME..."
 rm -f "$PACKAGE_FILE"
 
 STAGE_DIR="$(mktemp -d)"
@@ -119,9 +125,43 @@ run_ssh "$REMOTE_SSH" "mv '$REMOTE_TMP' '$REMOTE_FINAL' && chmod 644 '$REMOTE_FI
 echo "[OK]   Server package updated"
 
 # -----------------------------------------------------------------------------
-# 2. Check the current Debian netinst release and download only when necessary
+# 2. Build and publish the small toolkit package
 # -----------------------------------------------------------------------------
-echo "[2/3] Checking current Debian ${DEBIAN_MAJOR} netinst ISO..."
+echo "[2/4] Building $TOOLKIT_PACKAGE_NAME..."
+TOOLKIT_STAGE="$(mktemp -d)"
+
+mkdir -p "$TOOLKIT_STAGE/auto" "$TOOLKIT_STAGE/config" "$TOOLKIT_STAGE/rootfs" "$TOOLKIT_STAGE/tools" "$TOOLKIT_STAGE/ventoy"
+
+cp -a "$AUTO_DIR/." "$TOOLKIT_STAGE/auto/"
+cp -a "$ROOTFS_DIR/." "$TOOLKIT_STAGE/rootfs/"
+cp -a "$TOOLS_DIR/." "$TOOLKIT_STAGE/tools/"
+cp -a "$VENTOY_DIR/." "$TOOLKIT_STAGE/ventoy/"
+cp -f "$CONFIG_DIR/manifest.json" "$TOOLKIT_STAGE/config/manifest.json"
+[[ ! -f "$CONFIG_DIR/xibo.env.example" ]] || cp -f "$CONFIG_DIR/xibo.env.example" "$TOOLKIT_STAGE/config/xibo.env.example"
+
+# Never publish active Xibo secrets. Keep the sanitized preseed only as a template.
+if [[ -f "$TOOLKIT_STAGE/auto/xibo-auto.cfg" ]]; then
+    mv "$TOOLKIT_STAGE/auto/xibo-auto.cfg" "$TOOLKIT_STAGE/auto/xibo-auto.cfg.template"
+fi
+rm -f "$TOOLKIT_STAGE/config/xibo.env" "$TOOLKIT_STAGE/tools/GLPI/GLPI.env"
+find "$TOOLKIT_STAGE" -type f \( -name '*.key' -o -name 'id_rsa' -o -name 'id_ed25519' \) -delete
+
+rm -f "$TOOLKIT_PACKAGE_FILE" "$TOOLKIT_SHA_FILE"
+tar --owner=0 --group=0 --numeric-owner -czf "$TOOLKIT_PACKAGE_FILE" -C "$TOOLKIT_STAGE" .
+sha256sum "$TOOLKIT_PACKAGE_FILE" | awk '{print $1 "  it-toolkit-files.tar.gz"}' > "$TOOLKIT_SHA_FILE"
+
+TOOLKIT_REMOTE_PATH="${TOOLKIT_REMOTE_PATH%/}"
+run_ssh "$REMOTE_SSH" "mkdir -p '$TOOLKIT_REMOTE_PATH'"
+run_scp -q "$TOOLKIT_PACKAGE_FILE" "$REMOTE_SSH:$TOOLKIT_REMOTE_PATH/$TOOLKIT_PACKAGE_NAME.tmp"
+run_scp -q "$TOOLKIT_SHA_FILE" "$REMOTE_SSH:$TOOLKIT_REMOTE_PATH/it-toolkit-files.sha256.tmp"
+run_ssh "$REMOTE_SSH" "mv '$TOOLKIT_REMOTE_PATH/$TOOLKIT_PACKAGE_NAME.tmp' '$TOOLKIT_REMOTE_PATH/$TOOLKIT_PACKAGE_NAME' && mv '$TOOLKIT_REMOTE_PATH/it-toolkit-files.sha256.tmp' '$TOOLKIT_REMOTE_PATH/it-toolkit-files.sha256' && chmod 644 '$TOOLKIT_REMOTE_PATH/$TOOLKIT_PACKAGE_NAME' '$TOOLKIT_REMOTE_PATH/it-toolkit-files.sha256'"
+rm -rf "$TOOLKIT_STAGE"
+echo "[OK]   Toolkit package published"
+
+# -----------------------------------------------------------------------------
+# 3. Check the current Debian netinst release and download only when necessary
+# -----------------------------------------------------------------------------
+echo "[3/4] Checking current Debian ${DEBIAN_MAJOR} netinst ISO..."
 
 SHA256SUMS="$(wget -qO- "$DEBIAN_NETINST_BASE/SHA256SUMS")" || {
     echo "[FAIL] Could not retrieve Debian SHA256SUMS" >&2
@@ -182,7 +222,7 @@ echo "[OK]   Current Debian netinst: $DEBIAN_ISO_NAME"
 echo "[OK]   SHA-256 verified"
 
 # -----------------------------------------------------------------------------
-# 3. Update a mounted Ventoy USB, when present
+# 4. Update a mounted Ventoy USB, when present
 # -----------------------------------------------------------------------------
 find_ventoy_mount() {
     local dev label mnt
@@ -209,20 +249,24 @@ find_ventoy_mount() {
     return 1
 }
 
-echo "[3/3] Checking for Ventoy USB..."
+echo "[4/4] Checking for Ventoy USB..."
 
 if VENTOY_MOUNT="$(find_ventoy_mount)"; then
     echo "      USB found: $VENTOY_MOUNT"
 
-    mkdir -p "$VENTOY_MOUNT/ventoy" "$VENTOY_MOUNT/auto"
+    mkdir -p "$VENTOY_MOUNT/ventoy" "$VENTOY_MOUNT/auto" "$VENTOY_MOUNT/config" "$VENTOY_MOUNT/rootfs" "$VENTOY_MOUNT/tools"
 
     cp -a "$VENTOY_DIR/." "$VENTOY_MOUNT/ventoy/"
     cp -a "$AUTO_DIR/." "$VENTOY_MOUNT/auto/"
+    cp -a "$ROOTFS_DIR/." "$VENTOY_MOUNT/rootfs/"
+    cp -a "$TOOLS_DIR/." "$VENTOY_MOUNT/tools/"
+    cp -f "$CONFIG_DIR/manifest.json" "$VENTOY_MOUNT/config/manifest.json"
+    [[ ! -f "$CONFIG_DIR/xibo.env.example" ]] || cp -f "$CONFIG_DIR/xibo.env.example" "$VENTOY_MOUNT/config/xibo.env.example"
+    rm -f "$VENTOY_MOUNT/config/xibo.env"
+    chmod +x "$VENTOY_MOUNT/tools/update-usb.sh"
 
-    cp -f "$ROOT_DIR/manifest.json" "$VENTOY_MOUNT/manifest.json"
-    cp -f "$ROOT_DIR/update-usb.sh" "$VENTOY_MOUNT/update-usb.sh"
-    cp -f "$ROOT_DIR/update-usb.ps1" "$VENTOY_MOUNT/update-usb.ps1"
-    chmod +x "$VENTOY_MOUNT/update-usb.sh"
+    # Mark the freshly prepared USB as having the same toolkit package version.
+    cp -f "$TOOLKIT_SHA_FILE" "$VENTOY_MOUNT/config/it-toolkit-files.sha256"
 
     render_xibo_file "$XIBO_AUTO_FILE" "$VENTOY_MOUNT/auto/xibo-auto.cfg"
 
@@ -232,7 +276,7 @@ if VENTOY_MOUNT="$(find_ventoy_mount)"; then
     USB_SHA256=""
 
     mkdir -p "$USB_ISO_DIR"
-    [[ ! -f "$USB_SHA_FILE" ]] || USB_SHA256="$(tr -d '[:space:]' < "$USB_SHA_FILE")"
+    [[ ! -f "$USB_SHA_FILE" ]] || USB_SHA256="$(awk '{print tolower($1); exit}' "$USB_SHA_FILE")"
 
     if [[ -f "$USB_ISO" && "$USB_SHA256" == "$DEBIAN_SHA256" ]]; then
         echo "[OK]   debian-13-netinst_VTNORMAL.iso content already current"
@@ -240,7 +284,7 @@ if VENTOY_MOUNT="$(find_ventoy_mount)"; then
         echo "      Copying $DEBIAN_ISO_NAME to USB as debian-13-netinst_VTNORMAL.iso..."
         cp -f "$DEBIAN_ISO" "$USB_ISO.tmp"
         mv -f "$USB_ISO.tmp" "$USB_ISO"
-        printf '%s\n' "$DEBIAN_SHA256" > "$USB_SHA_FILE"
+        printf '%s  %s\n' "$DEBIAN_SHA256" "debian-13-netinst_VTNORMAL.iso" > "$USB_SHA_FILE"
         echo "[OK]   debian-13-netinst_VTNORMAL.iso updated"
     fi
 
