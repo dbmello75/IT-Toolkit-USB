@@ -268,57 +268,8 @@ foreach ($c in $components) {
         }
     }
 
-    $shaPath = $destFile -replace '\.iso
-    $oldSignature = Get-State $id
-
-    if (-not $Force -and (Test-Path $destFile) -and
-        -not [string]::IsNullOrWhiteSpace($signature) -and
-        $signature -eq $oldSignature) {
-        Write-Host "[OK]   Already current: $filename"
-        Write-Host ""
-        continue
-    }
-
-    $part = "$destFile.part"
-    Write-Host "       Source: $resolved"
-    Write-Host "       Saving: $destFile"
-
-    try {
-        Download-LargeFile $resolved $part
-    } catch {
-        Remove-Item $part -Force -ErrorAction SilentlyContinue
-        if ($c.checksum.required -eq $true) { throw }
-        Write-Warning "Download failed for $name : $_"
-        Write-Host ""
-        continue
-    }
-
-    $actualSha = (Get-FileHash -Algorithm SHA256 $part).Hash.ToLowerInvariant()
-
-    if (-not [string]::IsNullOrWhiteSpace($expectedSha) -and $actualSha -ne $expectedSha) {
-        Remove-Item $part -Force -ErrorAction SilentlyContinue
-        throw "SHA-256 mismatch for $name"
-    }
-
-    if ($c.checksum.required -eq $true -and [string]::IsNullOrWhiteSpace($expectedSha)) {
-        Remove-Item $part -Force -ErrorAction SilentlyContinue
-        throw "Checksum required but unavailable for $name"
-    }
-
-    Move-Item $part $destFile -Force
     $shaPath = $destFile -replace '\.iso$', '.sha256'
-    Set-Content -Path $shaPath -Value ($actualSha + "  " + $filename) -Encoding ASCII
-    Set-State $id $signature $actualSha
 
-    Write-Host "[OK]   Updated: $filename"
-    if (-not [string]::IsNullOrWhiteSpace($expectedSha)) {
-        Write-Host "[OK]   SHA-256 verified"
-    }
-    Write-Host ""
-}
-
-Write-Host "Toolkit update complete."
-, '.sha256'
     if (-not $Force -and (Test-Path $destFile) -and -not [string]::IsNullOrWhiteSpace($expectedSha)) {
         $localSaved = ""
         if (Test-Path $shaPath) {
@@ -354,7 +305,7 @@ Write-Host "Toolkit update complete."
     if (-not $Force -and (Test-Path $destFile) -and
         -not [string]::IsNullOrWhiteSpace($signature) -and
         $signature -eq $oldSignature) {
-        Write-Host "[OK]   Already current: $filename"
+        Write-Host "[OK]   Already current (remote metadata): $filename"
         Write-Host ""
         continue
     }
@@ -367,8 +318,13 @@ Write-Host "Toolkit update complete."
         Download-LargeFile $resolved $part
     } catch {
         Remove-Item $part -Force -ErrorAction SilentlyContinue
-        if ($c.checksum.required -eq $true) { throw }
-        Write-Warning "Download failed for $name : $_"
+        if (Test-Path $destFile) {
+            Write-Warning "Download failed; existing ISO was preserved."
+        } elseif ($c.checksum.required -eq $true) {
+            throw
+        } else {
+            Write-Warning "Download failed for $name : $_"
+        }
         Write-Host ""
         continue
     }
@@ -377,7 +333,12 @@ Write-Host "Toolkit update complete."
 
     if (-not [string]::IsNullOrWhiteSpace($expectedSha) -and $actualSha -ne $expectedSha) {
         Remove-Item $part -Force -ErrorAction SilentlyContinue
-        throw "SHA-256 mismatch for $name"
+        if ($c.checksum.required -eq $true) {
+            throw "SHA-256 mismatch for $name"
+        }
+        Write-Warning "SHA-256 mismatch for $name; existing ISO was preserved."
+        Write-Host ""
+        continue
     }
 
     if ($c.checksum.required -eq $true -and [string]::IsNullOrWhiteSpace($expectedSha)) {
@@ -386,8 +347,7 @@ Write-Host "Toolkit update complete."
     }
 
     Move-Item $part $destFile -Force
-    $shaPath = $destFile -replace '\.iso$', '.sha256'
-    Set-Content -Path $shaPath -Value $actualSha -Encoding ASCII
+    Set-Content -Path $shaPath -Value ($actualSha + "  " + $filename) -Encoding ASCII
     Set-State $id $signature $actualSha
 
     Write-Host "[OK]   Updated: $filename"
