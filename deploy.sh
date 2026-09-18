@@ -215,8 +215,14 @@ if VENTOY_MOUNT="$(find_ventoy_mount)"; then
     echo "      USB found: $VENTOY_MOUNT"
 
     mkdir -p "$VENTOY_MOUNT/ventoy" "$VENTOY_MOUNT/auto"
+
     cp -a "$VENTOY_DIR/." "$VENTOY_MOUNT/ventoy/"
     cp -a "$AUTO_DIR/." "$VENTOY_MOUNT/auto/"
+
+    cp -f "$ROOT_DIR/manifest.json" "$VENTOY_MOUNT/manifest.json"
+    cp -f "$ROOT_DIR/update-usb.sh" "$VENTOY_MOUNT/update-usb.sh"
+    cp -f "$ROOT_DIR/update-usb.ps1" "$VENTOY_MOUNT/update-usb.ps1"
+    chmod +x "$VENTOY_MOUNT/update-usb.sh"
 
     render_xibo_file "$XIBO_AUTO_FILE" "$VENTOY_MOUNT/auto/xibo-auto.cfg"
 
