@@ -41,7 +41,7 @@ Desktop.ini
 .env
 .env.*
 !.env.example
-xibo.env
+config/xibo.env
 
 *.pem
 *.key
@@ -61,4 +61,7 @@ tmp/
 temp/
 
 # USB updater state
-.it-toolkit-state.tsv
+config/.iso-state.tsv
+
+# Local toolkit package state
+config/it-toolkit-files.sha256
