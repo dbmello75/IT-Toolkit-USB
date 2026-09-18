@@ -43,7 +43,7 @@ require_cmd() {
     }
 }
 
-for cmd in curl python3 sha256sum awk grep sed sort cp mkdir mv; do
+for cmd in curl python3 sha256sum awk grep sed sort cp mkdir mv tar mktemp; do
     require_cmd "$cmd"
 done
 
@@ -290,8 +290,7 @@ fail_or_continue() {
         exit 1
     fi
 }
-
-while IFS=
+while IFS=$'\t' read -r id name destination filename method provider url checksum_required checksum_value checksum_url; do
     [[ -n "$id" ]] || continue
 
     echo "[$id] $name"
@@ -324,12 +323,10 @@ while IFS=
         expected_sha="$(resolve_expected_sha256 "$provider" "$url" "$resolved_url" || true)"
     fi
 
-    # Prefer a published SHA-256 file when the manifest provides one.
     if [[ -z "$expected_sha" && -n "$checksum_url" ]]; then
         expected_sha="$(curl -fsSL --retry 2 --connect-timeout 10 --max-time 30 "$checksum_url" 2>/dev/null | awk '{print tolower($1); exit}' || true)"
     fi
 
-    # If we know the remote hash, avoid downloading the ISO when the local one matches.
     if [[ "$FORCE" -eq 0 && -f "$dest_file" && -n "$expected_sha" ]]; then
         local_hash_file="${dest_file%.iso}.sha256"
         local_saved=""
@@ -361,7 +358,7 @@ while IFS=
     old_sig="$(state_get "$id")"
 
     if [[ "$FORCE" -eq 0 && -f "$dest_file" && -n "$sig" && "$sig" == "$old_sig" ]]; then
-        echo "[OK]   Already current: $filename"
+        echo "[OK]   Already current (remote metadata): $filename"
         echo
         continue
     fi
@@ -370,18 +367,24 @@ while IFS=
     echo "       Source: $resolved_url"
     echo "       Saving: $dest_file"
 
-    if ! curl -fL --retry 3 --retry-delay 2 -C - -o "$tmp" "$resolved_url"; then
+    if ! curl -fL --retry 3 --retry-delay 2 --connect-timeout 15 -C - -o "$tmp" "$resolved_url"; then
         rm -f "$tmp"
-        fail_or_continue "$checksum_required" "Download failed: $name"
+        if [[ -f "$dest_file" ]]; then
+            echo "[WARN] Download failed; existing ISO was preserved."
+        else
+            fail_or_continue "$checksum_required" "Download failed: $name"
+        fi
         echo
         continue
     fi
 
-    actual_sha="$(sha256sum "$tmp" | awk '{print $1}')"
+    actual_sha="$(sha256sum "$tmp" | awk '{print tolower($1)}')"
 
     if [[ -n "$expected_sha" && "$actual_sha" != "$expected_sha" ]]; then
         rm -f "$tmp"
-        fail_or_continue "1" "SHA-256 mismatch for $name"
+        fail_or_continue "$checksum_required" "SHA-256 mismatch for $name"
+        echo
+        continue
     fi
 
     if [[ "$checksum_required" == "1" && -z "$expected_sha" ]]; then
@@ -391,81 +394,6 @@ while IFS=
 
     mv -f "$tmp" "$dest_file"
     printf '%s  %s\n' "$actual_sha" "$filename" > "${dest_file%.iso}.sha256"
-    state_set "$id" "$sig" "$actual_sha"
-
-    echo "[OK]   Updated: $filename"
-    [[ -z "$expected_sha" ]] || echo "[OK]   SHA-256 verified"
-    echo
-done < <(component_rows)
-
-echo "Toolkit update complete."
-\t' read -r id name destination filename method provider url checksum_required checksum_value checksum_url; do
-    [[ -n "$id" ]] || continue
-
-    echo "[$id] $name"
-    dest_dir="$TARGET/$destination"
-    dest_file="$dest_dir/$filename"
-    mkdir -p "$dest_dir"
-
-    if [[ "$filename" != *_VTNORMAL.iso ]]; then
-        echo "[FAIL] Manifest filename does not end in _VTNORMAL.iso: $filename" >&2
-        exit 1
-    fi
-
-    resolved_url="$url"
-    if [[ "$method" == "dynamic" ]]; then
-        if ! resolved_url="$(resolve_url "$provider" "$url")"; then
-            fail_or_continue "$checksum_required" "Could not resolve current download for $name"
-            echo
-            continue
-        fi
-    fi
-
-    [[ -n "$resolved_url" ]] || {
-        fail_or_continue "$checksum_required" "No download URL for $name"
-        echo
-        continue
-    }
-
-    expected_sha="$checksum_value"
-    if [[ -z "$expected_sha" ]]; then
-        expected_sha="$(resolve_expected_sha256 "$provider" "$url" "$resolved_url" || true)"
-    fi
-
-    sig="$(remote_signature "$resolved_url")"
-    old_sig="$(state_get "$id")"
-
-    if [[ "$FORCE" -eq 0 && -f "$dest_file" && -n "$sig" && "$sig" == "$old_sig" ]]; then
-        echo "[OK]   Already current: $filename"
-        echo
-        continue
-    fi
-
-    tmp="${dest_file}.part"
-    echo "       Source: $resolved_url"
-    echo "       Saving: $dest_file"
-
-    if ! curl -fL --retry 3 --retry-delay 2 -C - -o "$tmp" "$resolved_url"; then
-        rm -f "$tmp"
-        fail_or_continue "$checksum_required" "Download failed: $name"
-        echo
-        continue
-    fi
-
-    actual_sha="$(sha256sum "$tmp" | awk '{print $1}')"
-
-    if [[ -n "$expected_sha" && "$actual_sha" != "$expected_sha" ]]; then
-        rm -f "$tmp"
-        fail_or_continue "1" "SHA-256 mismatch for $name"
-    fi
-
-    if [[ "$checksum_required" == "1" && -z "$expected_sha" ]]; then
-        rm -f "$tmp"
-        fail_or_continue "1" "Checksum required but unavailable for $name"
-    fi
-
-    mv -f "$tmp" "$dest_file"
-    printf '%s\n' "$actual_sha" > "${dest_file%.iso}.sha256"
     state_set "$id" "$sig" "$actual_sha"
 
     echo "[OK]   Updated: $filename"
