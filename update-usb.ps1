@@ -152,7 +152,7 @@ function Get-RemoteSignature([string]$Url) {
 function Get-State([string]$Id) {
     if (-not (Test-Path $StateFile)) { return "" }
     foreach ($line in Get-Content $StateFile) {
-        $parts = $line.Split([char]9, 3)
+        $parts = $line -split [char]9, 3
         if ($parts.Count -ge 2 -and $parts[0] -eq $Id) {
             return $parts[1]
         }
@@ -164,7 +164,7 @@ function Set-State([string]$Id, [string]$Signature, [string]$Sha256) {
     $lines = @()
     if (Test-Path $StateFile) {
         $lines = @(Get-Content $StateFile | Where-Object {
-            $p = $_.Split([char]9, 2)
+            $p = $_ -split [char]9, 2
             $p[0] -ne $Id
         })
     }
