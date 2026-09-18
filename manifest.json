@@ -3,7 +3,7 @@
     "name": "IT Toolkit USB",
     "description": "Automated Ventoy-based USB toolkit for IT technicians",
     "schema_version": 1,
-    "version": "0.2.0"
+    "version": "0.3.0"
   },
   "profiles": {
     "standard": {
@@ -12,7 +12,7 @@
     },
     "full": {
       "name": "Full Technician",
-      "description": "Complete toolkit including operating systems, recovery, antivirus and virtualization"
+      "description": "Complete technician toolkit including deployment, recovery, antivirus and virtualization"
     },
     "recovery": {
       "name": "Recovery Toolkit",
@@ -41,46 +41,74 @@
   "components": [
     {
       "id": "windows11-en",
-      "name": "Windows 11 x64 - English",
-      "description": "Microsoft Windows 11 installation media in English",
+      "name": "Windows 11 x64 - English (US)",
+      "description": "Private mirror maintained by Hitech/VicPro",
       "category": "Windows",
       "type": "iso",
       "destination": "ISO/Windows",
-      "filename": "Windows11-English-x64.iso",
+      "filename": "Windows11-EN-US_VTNORMAL.iso",
       "profiles": ["standard", "full"],
       "download": {
         "enabled": true,
-        "method": "dynamic",
-        "provider": "microsoft",
-        "url": null
+        "method": "direct",
+        "provider": "vicpro-mirror",
+        "url": "https://mendon.vicpro.co/Windows11-EN-US_VTNORMAL.iso"
       },
-      "checksum": {
-        "algorithm": "sha256",
-        "required": false,
-        "value": null
-      },
+      "checksum": {"algorithm": "sha256", "required": false, "value": null},
       "enabled": true
     },
     {
       "id": "windows11-ptbr",
-      "name": "Windows 11 x64 - Portuguese Brazil",
-      "description": "Microsoft Windows 11 installation media in Brazilian Portuguese",
+      "name": "Windows 11 x64 - Portuguese (Brazil)",
+      "description": "Private mirror maintained by Hitech/VicPro",
       "category": "Windows",
       "type": "iso",
       "destination": "ISO/Windows",
-      "filename": "Windows11-PTBR-x64.iso",
+      "filename": "Windows11-PT-BR_VTNORMAL.iso",
       "profiles": ["full"],
       "download": {
         "enabled": true,
-        "method": "dynamic",
-        "provider": "microsoft",
-        "url": null
+        "method": "direct",
+        "provider": "vicpro-mirror",
+        "url": "https://mendon.vicpro.co/Windows11-PT-BR_VTNORMAL.iso"
       },
-      "checksum": {
-        "algorithm": "sha256",
-        "required": false,
-        "value": null
+      "checksum": {"algorithm": "sha256", "required": false, "value": null},
+      "enabled": true
+    },
+    {
+      "id": "zorin-pro",
+      "name": "Zorin OS Pro",
+      "description": "Licensed Zorin OS Pro image hosted on the private Hitech/VicPro mirror",
+      "category": "Linux",
+      "type": "iso",
+      "destination": "ISO/Linux",
+      "filename": "Zorin-Pro_VTNORMAL.iso",
+      "profiles": ["full"],
+      "download": {
+        "enabled": true,
+        "method": "direct",
+        "provider": "vicpro-mirror",
+        "url": "https://mendon.vicpro.co/Zorin-Pro_VTNORMAL.iso"
       },
+      "checksum": {"algorithm": "sha256", "required": false, "value": null},
+      "enabled": true
+    },
+    {
+      "id": "zorin-pro-lite",
+      "name": "Zorin OS Pro Lite",
+      "description": "Licensed Zorin OS Pro Lite image hosted on the private Hitech/VicPro mirror",
+      "category": "Linux",
+      "type": "iso",
+      "destination": "ISO/Linux",
+      "filename": "Zorin-Pro-Lite_VTNORMAL.iso",
+      "profiles": ["full"],
+      "download": {
+        "enabled": true,
+        "method": "direct",
+        "provider": "vicpro-mirror",
+        "url": "https://mendon.vicpro.co/Zorin-Pro-Lite_VTNORMAL.iso"
+      },
+      "checksum": {"algorithm": "sha256", "required": false, "value": null},
       "enabled": true
     },
     {
@@ -91,18 +119,14 @@
       "type": "iso",
       "destination": "ISO/Linux",
       "filename": "debian-13-netinst_VTNORMAL.iso",
-      "profiles": ["xibo"],
+      "profiles": ["full", "xibo"],
       "download": {
         "enabled": true,
         "method": "dynamic",
         "provider": "debian",
-        "url": null
+        "url": "https://cdimage.debian.org/debian-cd/current/amd64/iso-cd"
       },
-      "checksum": {
-        "algorithm": "sha256",
-        "required": true,
-        "value": null
-      },
+      "checksum": {"algorithm": "sha256", "required": true, "value": null},
       "enabled": true
     },
     {
@@ -112,19 +136,15 @@
       "category": "Recovery",
       "type": "iso",
       "destination": "ISO/Recovery",
-      "filename": "HBCD_PE_x64.iso",
+      "filename": "HBCD_PE_x64_VTNORMAL.iso",
       "profiles": ["standard", "full", "recovery"],
       "download": {
         "enabled": true,
-        "method": "dynamic",
+        "method": "direct",
         "provider": "hirensbootcd",
-        "url": null
+        "url": "https://www.hirensbootcd.org/files/HBCD_PE_x64.iso"
       },
-      "checksum": {
-        "algorithm": "sha256",
-        "required": true,
-        "value": null
-      },
+      "checksum": {"algorithm": "sha256", "required": false, "value": null},
       "enabled": true
     },
     {
@@ -134,19 +154,15 @@
       "category": "Recovery",
       "type": "iso",
       "destination": "ISO/Recovery",
-      "filename": "systemrescue.iso",
+      "filename": "systemrescue_VTNORMAL.iso",
       "profiles": ["standard", "full", "recovery"],
       "download": {
         "enabled": true,
         "method": "dynamic",
         "provider": "systemrescue",
-        "url": null
+        "url": "https://sourceforge.net/projects/systemrescuecd/files/sysresccd-x86/"
       },
-      "checksum": {
-        "algorithm": "sha256",
-        "required": true,
-        "value": null
-      },
+      "checksum": {"algorithm": "sha256", "required": false, "value": null},
       "enabled": true
     },
     {
@@ -156,41 +172,33 @@
       "category": "Recovery",
       "type": "iso",
       "destination": "ISO/Recovery",
-      "filename": "rescuezilla.iso",
+      "filename": "rescuezilla_VTNORMAL.iso",
       "profiles": ["standard", "full", "recovery"],
       "download": {
         "enabled": true,
         "method": "dynamic",
         "provider": "rescuezilla",
-        "url": null
+        "url": "https://api.github.com/repos/rescuezilla/rescuezilla/releases/latest"
       },
-      "checksum": {
-        "algorithm": "sha256",
-        "required": true,
-        "value": null
-      },
+      "checksum": {"algorithm": "sha256", "required": false, "value": null},
       "enabled": true
     },
     {
       "id": "clonezilla",
       "name": "Clonezilla Live",
-      "description": "Disk cloning and imaging utility",
+      "description": "Stable AMD64 disk cloning and imaging utility",
       "category": "Recovery",
       "type": "iso",
       "destination": "ISO/Recovery",
-      "filename": "clonezilla-live.iso",
+      "filename": "clonezilla-live_VTNORMAL.iso",
       "profiles": ["standard", "full", "recovery"],
       "download": {
         "enabled": true,
         "method": "dynamic",
         "provider": "clonezilla",
-        "url": null
+        "url": "https://sourceforge.net/projects/clonezilla/files/clonezilla_live_stable/"
       },
-      "checksum": {
-        "algorithm": "sha256",
-        "required": true,
-        "value": null
-      },
+      "checksum": {"algorithm": "sha256", "required": false, "value": null},
       "enabled": true
     },
     {
@@ -200,63 +208,33 @@
       "category": "Antivirus",
       "type": "iso",
       "destination": "ISO/Antivirus",
-      "filename": "kaspersky-rescue.iso",
+      "filename": "kaspersky-rescue_VTNORMAL.iso",
       "profiles": ["full", "recovery"],
       "download": {
         "enabled": true,
-        "method": "dynamic",
+        "method": "direct",
         "provider": "kaspersky",
-        "url": null
+        "url": "https://rescuedisk.s.kaspersky-labs.com/updatable/2024/krd.iso"
       },
-      "checksum": {
-        "algorithm": "sha256",
-        "required": false,
-        "value": null
-      },
-      "enabled": true
-    },
-    {
-      "id": "zorin",
-      "name": "Zorin OS Core",
-      "description": "Desktop Linux distribution useful for testing, troubleshooting and general-purpose live environments",
-      "category": "Linux",
-      "type": "iso",
-      "destination": "ISO/Linux",
-      "filename": "zorin-os-core.iso",
-      "profiles": ["full"],
-      "download": {
-        "enabled": true,
-        "method": "dynamic",
-        "provider": "zorin",
-        "url": null
-      },
-      "checksum": {
-        "algorithm": "sha256",
-        "required": true,
-        "value": null
-      },
+      "checksum": {"algorithm": "sha256", "required": false, "value": null},
       "enabled": true
     },
     {
       "id": "proxmox-ve",
       "name": "Proxmox VE",
-      "description": "Proxmox Virtual Environment installer",
+      "description": "Latest Proxmox Virtual Environment installer",
       "category": "Virtualization",
       "type": "iso",
       "destination": "ISO/Virtualization",
-      "filename": "proxmox-ve.iso",
+      "filename": "proxmox-ve_VTNORMAL.iso",
       "profiles": ["full"],
       "download": {
         "enabled": true,
         "method": "dynamic",
         "provider": "proxmox",
-        "url": null
+        "url": "https://enterprise.proxmox.com/iso/"
       },
-      "checksum": {
-        "algorithm": "sha256",
-        "required": true,
-        "value": null
-      },
+      "checksum": {"algorithm": "sha256", "required": false, "value": null},
       "enabled": true
     },
     {
@@ -266,7 +244,7 @@
       "category": "Network",
       "type": "iso",
       "destination": "ISO/Network",
-      "filename": "netboot.xyz.iso",
+      "filename": "netboot.xyz_VTNORMAL.iso",
       "profiles": ["standard", "full"],
       "download": {
         "enabled": true,
@@ -274,18 +252,20 @@
         "provider": "netbootxyz",
         "url": "https://boot.netboot.xyz/ipxe/netboot.xyz.iso"
       },
-      "checksum": {
-        "algorithm": "sha256",
-        "required": false,
-        "value": null
-      },
+      "checksum": {"algorithm": "sha256", "required": false, "value": null},
       "enabled": true
     }
   ],
   "ventoy": {
     "config_source": "ventoy/ventoy.json",
     "config_destination": "ventoy/ventoy.json",
-    "install_latest": true
+    "install_latest": true,
+    "force_normal_mode_suffix": "_VTNORMAL.iso"
+  },
+  "updater": {
+    "default_profile": "full",
+    "state_file": ".it-toolkit-state.tsv",
+    "download_retry_count": 3
   },
   "installer": {
     "require_admin": true,
