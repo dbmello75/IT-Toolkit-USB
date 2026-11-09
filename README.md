@@ -4,6 +4,33 @@ Ventoy-based USB toolkit for IT technicians, with self-updating configuration, t
 
 The repository is the source of truth. A technician USB can be updated from Windows or Linux without cloning the repository.
 
+## VicPro integration plan
+
+The agreed destination is `VicPro/IT-Toolkit-USB/`, alongside `Displays/` and `Infrastructure/`. The toolkit will provide the deployment entry point for one technician USB containing display installation, Windows installation and maintenance tools.
+
+Migration and the combined deployment have not been implemented or tested. The current standalone publishing and USB update workflow below remains the available workflow. Track the integration in [VicPro issue #5](https://github.com/dbmello75/VicPro/issues/5).
+
+| Path in VicPro | Responsibility |
+|---|---|
+| `IT-Toolkit-USB/deploy.sh` | Prepare and update the complete USB |
+| `IT-Toolkit-USB/ventoy/` | Main Ventoy configuration, menu and theme |
+| `IT-Toolkit-USB/auto/` | Windows unattended installation files |
+| `Displays/Players/AutoInstall/` | Display-specific scripts, templates and configuration |
+
+The display source currently lives at `Displays/Players/AutoInstall/`; `Displays/Autoinstall/` was an earlier proposed path.
+
+The combined deploy must locate its inputs relative to the script, prepare toolkit and display files, generate one `/ventoy/ventoy.json`, validate its USB paths, and copy the prepared result to the Ventoy data partition. Display-specific files should remain owned by Displays.
+
+Merge configuration by section: concatenate applicable rule lists such as `auto_install`, `injection` and `menu_alias` in a documented order; define ownership of global settings and reject unresolved conflicts. Preserve BIOS/UEFI-specific sections and resolve competing rules for the same image explicitly. A generic object merge can discard an entire list.
+
+Use official Ventoy with the generated JSON. Native JSON `include` support is a separate proposal, not a dependency of this migration.
+
+Before completing the migration, validate image and template paths, test one display installation and one Windows installation, and verify the chosen USB–Ethernet adapter in Debian and WinPE. Direct PXE boot additionally requires validation in each target model's firmware.
+
+## Project memory
+
+`.ai-memory.toml` identifies this repository as project `IT-Toolkit-USB` in workspace `default`. The explicit display name avoids a server-side collision involving the normalized key `dbmello75-it-toolkit-usb`. This marker selects the memory scope; it does not contain credentials or install the memory service.
+
 ## Layout
 
 ```text
