@@ -4,28 +4,30 @@ Ventoy-based USB toolkit for IT technicians, with self-updating configuration, t
 
 The repository is the source of truth. A technician USB can be updated from Windows or Linux without cloning the repository.
 
-## VicPro integration plan
+## VicPro integration
 
-The agreed destination is `VicPro/IT-Toolkit-USB/`, alongside `Displays/` and `Infrastructure/`. The toolkit will provide the deployment entry point for one technician USB containing display installation, Windows installation and maintenance tools.
+The toolkit lives at `VicPro/IT-Toolkit-USB/`. It owns the single
+`ventoy/ventoy.json` for the shared technician USB. The Xibo entry uses the
+preseed and GRUB configuration from `Displays/Players/AutoInstall/`.
 
-Migration and the combined deployment have not been implemented or tested. The current standalone publishing and USB update workflow below remains the available workflow. Track the integration in [VicPro issue #5](https://github.com/dbmello75/VicPro/issues/5).
+From the root of VicPro:
 
-| Path in VicPro | Responsibility |
-|---|---|
-| `IT-Toolkit-USB/deploy.sh` | Prepare and update the complete USB |
-| `IT-Toolkit-USB/ventoy/` | Main Ventoy configuration, menu and theme |
-| `IT-Toolkit-USB/auto/` | Windows unattended installation files |
-| `Displays/Players/AutoInstall/` | Display-specific scripts, templates and configuration |
+```bash
+git submodule update --init IT-Toolkit-USB
+./IT-Toolkit-USB/deploy.sh --check
+USB_MOUNT=/mnt/ventoy ./IT-Toolkit-USB/deploy.sh
+```
 
-The display source currently lives at `Displays/Players/AutoInstall/`; `Displays/Autoinstall/` was an earlier proposed path.
+Use the mounted Ventoy data partition as `USB_MOUNT`. The default profile is
+`full`. Set `PROFILE=xibo` to update only the Xibo ISO while keeping the other
+boot entries and existing ISOs. The deploy uses the administrative SSH alias
+`remote` by default. An independent toolkit checkout can set
+`DISPLAY_AUTOINSTALL_DIR` to the VicPro AutoInstall source directory.
 
-The combined deploy must locate its inputs relative to the script, prepare toolkit and display files, generate one `/ventoy/ventoy.json`, validate its USB paths, and copy the prepared result to the Ventoy data partition. Display-specific files should remain owned by Displays.
-
-Merge configuration by section: concatenate applicable rule lists such as `auto_install`, `injection` and `menu_alias` in a documented order; define ownership of global settings and reject unresolved conflicts. Preserve BIOS/UEFI-specific sections and resolve competing rules for the same image explicitly. A generic object merge can discard an entire list.
-
-Use official Ventoy with the generated JSON. Native JSON `include` support is a separate proposal, not a dependency of this migration.
-
-Before completing the migration, validate image and template paths, test one display installation and one Windows installation, and verify the chosen USB–Ethernet adapter in Debian and WinPE. Direct PXE boot additionally requires validation in each target model's firmware.
+The check validates boot configuration and references locally. Before rollout,
+boot the USB on test hardware and verify the Windows and Xibo installers,
+including the Xibo disk selection and the USB Ethernet adapter in Debian and
+WinPE.
 
 ## Project memory
 
@@ -37,8 +39,7 @@ Before completing the migration, validate image and template paths, test one dis
 IT-Toolkit-USB/
 ├── auto/
 ├── config/
-│   ├── manifest.json
-│   └── xibo.env.example
+│   └── manifest.json
 ├── ISO/
 │   ├── Antivirus/
 │   ├── Linux/
@@ -46,7 +47,6 @@ IT-Toolkit-USB/
 │   ├── Recovery/
 │   ├── Virtualization/
 │   └── Windows/
-├── rootfs/
 ├── tools/
 │   ├── update-usb.ps1
 │   ├── update-usb.sh
@@ -62,48 +62,16 @@ The repository root is intentionally kept clean. Runtime configuration lives in 
 
 ## Publishing toolkit updates
 
-`deploy.sh` now publishes two independent packages.
+The administrative deploy publishes the Xibo client package through Displays.
+It also publishes `it-toolkit-files.tar.gz` and its SHA-256 checksum under
+`https://remote.vicpro.co/display/toolkit/` by default. The toolkit archive
+contains the menu, manifest, public installer templates and technician tools.
 
-The Xibo client package remains:
-
-```text
-xibo-client.tar.gz
-```
-
-The technician USB package is:
-
-```text
-it-toolkit-files.tar.gz
-it-toolkit-files.sha256
-```
-
-By default it is published under:
-
-```text
-https://remote.vicpro.co/display/toolkit/
-```
-
-The toolkit package contains the small files that can change frequently:
-
-```text
-auto/
-config/
-rootfs/
-tools/
-ventoy/
-```
-
-ISOs are not included in this package.
-
-Private files such as `config/xibo.env`, GLPI private credentials, SSH keys and other secret keys are excluded.
-
-The sanitized Xibo preseed is published as:
-
-```text
-auto/xibo-auto.cfg.template
-```
-
-The active rendered `auto/xibo-auto.cfg` already on a technician USB is preserved, so remote toolkit updates do not overwrite it with placeholders.
+The administrative deploy copies the active Xibo preseed and GRUB files directly
+to the USB. Both files stay out of the public toolkit archive. Use the
+administrative deploy to migrate an older USB or to refresh those two files.
+The Windows and Linux updaters refresh the public files and ISOs on a
+provisioned USB.
 
 ## Updating a technician USB
 
@@ -188,34 +156,10 @@ Zorin-Pro-Lite_VTNORMAL.sha256
 
 ## Xibo deployment
 
-Private Xibo values are stored only on the administrative deployment machine.
-
-Create:
-
-```bash
-cp config/xibo.env.example config/xibo.env
-```
-
-Then fill:
-
-```text
-XIBO_ROOT_PASSWORD_HASH
-XIBO_USER_PASSWORD_HASH
-XIBO_CMS_KEY
-```
-
-`config/xibo.env` is ignored by Git and is never included in the published toolkit package.
-
-The Xibo installer continues to use:
-
-```text
-ISO/Linux/debian-13-netinst_VTNORMAL.iso
-auto/xibo-auto.cfg
-auto/xibo-grub.cfg
-rootfs/
-```
-
-The operating-system installation target disk remains intentionally manual.
+Choose **Xibo iClient Install** in the Ventoy menu. Select the intended internal
+disk in Debian Installer. Stop if the correct disk cannot be identified or if
+only Ventoy devices are shown. The installer downloads the current Xibo package
+from the Displays server during installation.
 
 ## Windows inventory tool
 

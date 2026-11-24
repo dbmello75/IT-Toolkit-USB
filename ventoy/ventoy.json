@@ -1,4 +1,10 @@
 {
+  "menu_alias": [
+    {
+      "image": "/ISO/Linux/debian-13-netinst_VTNORMAL.iso",
+      "alias": "Xibo iClient Install"
+    }
+  ],
   "auto_install": [
     {
       "image": "/ISO/Windows/Windows11-EN-US_VTNORMAL.iso",

@@ -4,14 +4,14 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 TARGET="${TARGET:-$ROOT_DIR}"
-MANIFEST="${MANIFEST:-$TARGET/config/manifest.json}"
 PROFILE="${PROFILE:-full}"
 FORCE=0
 ALL_COMPONENTS=0
+REFRESH_TOOLKIT=1
 
 usage() {
     cat <<'EOF'
-Usage: update-usb.sh [--target PATH] [--profile NAME] [--all] [--force]
+Usage: update-usb.sh [--target PATH] [--profile NAME] [--all] [--force] [--skip-toolkit-refresh]
 
 Defaults:
   --target   directory containing this script
@@ -30,6 +30,7 @@ while [[ $# -gt 0 ]]; do
         --target) TARGET="$2"; shift 2 ;;
         --profile) PROFILE="$2"; shift 2 ;;
         --all) ALL_COMPONENTS=1; shift ;;
+        --skip-toolkit-refresh) REFRESH_TOOLKIT=0; shift ;;
         --force) FORCE=1; shift ;;
         -h|--help) usage; exit 0 ;;
         *) echo "[FAIL] Unknown option: $1" >&2; usage; exit 2 ;;
@@ -47,6 +48,7 @@ for cmd in curl python3 sha256sum awk grep sed sort cp mkdir mv tar mktemp; do
     require_cmd "$cmd"
 done
 
+MANIFEST="${MANIFEST:-$TARGET/config/manifest.json}"
 [[ -f "$MANIFEST" ]] || { echo "[FAIL] Manifest not found: $MANIFEST" >&2; exit 1; }
 mkdir -p "$TARGET"
 TARGET="$(cd "$TARGET" && pwd)"
@@ -125,7 +127,10 @@ PY
     echo "[OK]   Toolkit configuration, tools, rootfs and Ventoy files updated."
 }
 
-update_toolkit_files
+if [[ "$REFRESH_TOOLKIT" -eq 1 ]]; then
+    update_toolkit_files
+fi
+
 component_rows() {
     python3 - "$MANIFEST" "$PROFILE" "$ALL_COMPONENTS" <<'PY'
 import json, sys
@@ -153,7 +158,7 @@ for c in data.get("components", []):
         chk.get("value") or "",
         chk.get("url") or ""
     ]
-    print("\t".join(str(x).replace("\t", " ") for x in fields))
+    print("\x1f".join(str(x).replace("\x1f", " ") for x in fields))
 PY
 }
 
@@ -167,8 +172,7 @@ resolve_url() {
             local sums
             sums="$(curl -fsSL --retry 3 "$base/SHA256SUMS")"
             name="$(printf '%s\n' "$sums" |
-                awk '$2 ~ /^debian-13\.[0-9.]+-amd64-netinst\.iso$/ {print $2}' |
-                sed 's/^\*//' | sort -V | tail -n1)"
+                awk '{sub(/^\*/, "", $2); if ($2 ~ /^debian-13\.[0-9.]+-amd64-netinst\.iso$/) print $2}' | sort -V | tail -n1)"
             [[ -n "$name" ]] || return 1
             printf '%s/%s\n' "$base" "$name"
             ;;
@@ -290,7 +294,8 @@ fail_or_continue() {
         exit 1
     fi
 }
-while IFS=$'\t' read -r id name destination filename method provider url checksum_required checksum_value checksum_url; do
+rows="$(component_rows)"
+while IFS=$'\x1f' read -r id name destination filename method provider url checksum_required checksum_value checksum_url; do
     [[ -n "$id" ]] || continue
 
     echo "[$id] $name"
@@ -327,35 +332,30 @@ while IFS=$'\t' read -r id name destination filename method provider url checksu
         expected_sha="$(curl -fsSL --retry 2 --connect-timeout 10 --max-time 30 "$checksum_url" 2>/dev/null | awk '{print tolower($1); exit}' || true)"
     fi
 
-    if [[ "$FORCE" -eq 0 && -f "$dest_file" && -n "$expected_sha" ]]; then
-        local_hash_file="${dest_file%.iso}.sha256"
-        local_saved=""
-        [[ ! -f "$local_hash_file" ]] || local_saved="$(awk '{print tolower($1); exit}' "$local_hash_file")"
+    if [[ "$checksum_required" == "1" && ! "$expected_sha" =~ ^[0-9a-f]{64}$ ]]; then
+        fail_or_continue "1" "Checksum required but unavailable for $name"
+    fi
 
-        if [[ "$local_saved" == "$expected_sha" ]]; then
-            echo "[OK]   Already current (SHA-256): $filename"
+    if [[ "$FORCE" -eq 0 && -f "$dest_file" && -n "$expected_sha" ]]; then
+        local_actual="$(sha256sum "$dest_file" | awk '{print $1}')"
+        if [[ "$local_actual" == "$expected_sha" ]]; then
+            printf '%s  %s\n' "$local_actual" "$filename" > "${dest_file%.iso}.sha256"
+            echo "[OK]   Existing ISO matches SHA-256: $filename"
             echo
             continue
         fi
-
-        if [[ -z "$local_saved" ]]; then
-            echo "       No local checksum; verifying existing ISO once..."
-            local_actual="$(sha256sum "$dest_file" | awk '{print tolower($1)}')"
-            if [[ "$local_actual" == "$expected_sha" ]]; then
-                printf '%s  %s\n' "$local_actual" "$filename" > "$local_hash_file"
-                echo "[OK]   Existing ISO matches remote SHA-256."
-                echo
-                continue
-            fi
-        fi
-    elif [[ "$FORCE" -eq 0 && -f "$dest_file" && -n "$checksum_url" && -z "$expected_sha" ]]; then
+    elif [[ "$FORCE" -eq 0 && -f "$dest_file" && -n "$checksum_url" ]]; then
         echo "[WARN] Remote checksum unavailable; keeping existing ISO."
         echo
         continue
     fi
 
-    sig="$(remote_signature "$resolved_url")"
-    old_sig="$(state_get "$id")"
+    sig=""
+    old_sig=""
+    if [[ -z "$expected_sha" ]]; then
+        sig="$(remote_signature "$resolved_url")"
+        old_sig="$(state_get "$id")"
+    fi
 
     if [[ "$FORCE" -eq 0 && -f "$dest_file" && -n "$sig" && "$sig" == "$old_sig" ]]; then
         echo "[OK]   Already current (remote metadata): $filename"
@@ -369,10 +369,10 @@ while IFS=$'\t' read -r id name destination filename method provider url checksu
 
     if ! curl -fL --retry 3 --retry-delay 2 --connect-timeout 15 -C - -o "$tmp" "$resolved_url"; then
         rm -f "$tmp"
-        if [[ -f "$dest_file" ]]; then
-            echo "[WARN] Download failed; existing ISO was preserved."
-        else
+        if [[ "$checksum_required" == "1" || ! -f "$dest_file" ]]; then
             fail_or_continue "$checksum_required" "Download failed: $name"
+        else
+            echo "[WARN] Download failed; existing ISO was preserved."
         fi
         echo
         continue
@@ -387,11 +387,6 @@ while IFS=$'\t' read -r id name destination filename method provider url checksu
         continue
     fi
 
-    if [[ "$checksum_required" == "1" && -z "$expected_sha" ]]; then
-        rm -f "$tmp"
-        fail_or_continue "1" "Checksum required but unavailable for $name"
-    fi
-
     mv -f "$tmp" "$dest_file"
     printf '%s  %s\n' "$actual_sha" "$filename" > "${dest_file%.iso}.sha256"
     state_set "$id" "$sig" "$actual_sha"
@@ -399,6 +394,6 @@ while IFS=$'\t' read -r id name destination filename method provider url checksu
     echo "[OK]   Updated: $filename"
     [[ -z "$expected_sha" ]] || echo "[OK]   SHA-256 verified"
     echo
-done < <(component_rows)
+done <<< "$rows"
 
 echo "Toolkit update complete."
